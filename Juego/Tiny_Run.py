@@ -2,7 +2,7 @@
 import pygame
 
 # Importamos las clases de nuestros otros archivos
-from personajes import Jugador
+from personajes      import Jugador
 from escenarios import Escenario
 from musica import GestorMusica
 
