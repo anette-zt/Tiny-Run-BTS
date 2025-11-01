@@ -51,12 +51,17 @@ class Jugador(pygame.sprite.Sprite):
     def __init__(self, personaje_img, x, y):
         super().__init__()
         self.image_derecha = pygame.image.load(os.path.join(RUTA_PERSONAJES, personaje_img)).convert_alpha()
+
+        # 🔹 Escalar la imagen del personaje
+        ancho_original, alto_original = self.image_derecha.get_size()
+        self.image_derecha = pygame.transform.scale(
+            self.image_derecha,
+            (int(ancho_original * 0.6), int(alto_original * 0.6))  # 0.6 = 60% del tamaño original
+        )
+
         self.image_izquierda = pygame.transform.flip(self.image_derecha, True, False)
         self.image = self.image_derecha
         self.rect = self.image.get_rect(center=(x, y))
-        self.vel_x = 0
-        self.vel_y = 0
-        self.en_suelo = False
 
     def mover(self, teclas):
         self.vel_x = 0
