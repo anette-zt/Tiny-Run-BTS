@@ -1,120 +1,178 @@
-# --- Tiny_Run.py ---
-
-# ... (importaciones y configuración inicial) ...
 import pygame
+import sys
+import random
+
+# Inicializa Pygame
 pygame.init()
 
-ANCHO_VENTANA = 800
-ALTO_VENTANA = 600
+# Configuración de ventana
+ANCHO, ALTO = 800, 600
+pantalla = pygame.display.set_mode((ANCHO, ALTO))
+pygame.display.set_caption("PIXIVIDAD - Estilo Mario Bros")
 
-# Ventana, reloj y FPS mínimos necesarios por el resto del código
-ventana = pygame.display.set_mode((ANCHO_VENTANA, ALTO_VENTANA))
-reloj = pygame.time.Clock()
-FPS = 60
+# Fuente para los puntos
+fuente = pygame.font.Font(None, 36)
 
-# Estado del bucle principal
-en_ejecucion = True
+# Colores
+AZUL_CIELO = (135, 206, 235)
+MARRON_SUELO = (139, 69, 19)
+VERDE_PLATAFORMA = (0, 200, 0)
 
-# Estados del juego
-ESTADO_MENU = 0
-ESTADO_JUGANDO = 1
-ESTADO_PAUSADO = 2
-ESTADO_GAMEOVER = 3
+# Variables del juego
+puntos = 0
+gravedad = 0.5
 
-# Estado actual por defecto (asegura que la variable existe antes del bucle principal)
-estado_actual = ESTADO_MENU
+# _____________________________
+# CLASES
+# _____________________________
 
-# Definición del mapa nivel 1 (ejemplo básico)
-mapa_nivel_1 = [
-    "XXXXXXXXXXXXXXXXXXXXXXXXX",
-    "X                       X",
-    "X                       X",
-    "X         P            X",
-    "XXXXXXXXXXXXXXXXXXXXXXXXX"
-]
+class Jugador(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        # Cargar sprites
+        self.image_derecha = pygame.image.load("V/V.jpg").convert()
+        self.image_derecha.set_colorkey((255, 255, 255))
+        self.image_derecha = pygame.transform.scale(self.image_derecha, (50, 70))
 
-# ¡NUEVO! Variable para la cámara
-camera_x = 0
+        self.image_izquierda = pygame.image.load("V/V.jpg").convert()
+        self.image_izquierda.set_colorkey((255, 255, 255))
+        self.image_izquierda = pygame.transform.scale(self.image_izquierda, (50, 70))
 
-# --- Función iniciar_juego() Modificada ---
-def iniciar_juego():
-    global jugador, escenario, estado_actual, personaje_elegido, nivel_elegido, camera_x
-    
-    jugador = jugador(100, ALTO_VENTANA - 150, personaje_elegido)
-    
-    # ¡NUEVO! Eliges el mapa basado en la selección
-    mapa_elegido = []
-    if nivel_elegido == "IDOL.jpg":
-        mapa_elegido = mapa_nivel_1 # (La variable que definimos arriba)
-    # else:
-    #     mapa_elegido = mapa_nivel_2
-        
-    escenario = escenario(nivel_elegido, mapa_elegido)
-    
-    # ¡YA NO HAY TIMER DE OBSTÁCULOS!
-    # pygame.time.set_timer(escenario.GENERAR_OBSTACULO, 0) # Lo desactivamos
-    
-    camera_x = 0 # Reseteamos la cámara
-    estado_actual = ESTADO_JUGANDO
+        self.image = self.image_derecha
+        self.rect = self.image.get_rect(center=(x, y))
+        self.vel_x = 0
+        self.vel_y = 0
+        self.en_suelo = False
 
-# --- Bucle Principal ---
-while en_ejecucion:
-    # --- 5. Manejo de Eventos ---
+    def mover(self, teclas):
+        self.vel_x = 0
+        if teclas[pygame.K_LEFT]:
+            self.vel_x = -5
+            self.image = self.image_izquierda
+        if teclas[pygame.K_RIGHT]:
+            self.vel_x = 5
+            self.image = self.image_derecha
+        if teclas[pygame.K_SPACE] and self.en_suelo:
+            self.vel_y = -10  # salto
+            self.en_suelo = False
+
+    def aplicar_gravedad(self):
+        self.vel_y += gravedad
+        if self.vel_y > 10:
+            self.vel_y = 10
+
+    def update(self, plataformas):
+        # Movimiento horizontal
+        self.rect.x += self.vel_x
+
+        # Gravedad
+        self.aplicar_gravedad()
+        self.rect.y += self.vel_y
+
+        # Colisiones con plataformas
+        self.en_suelo = False
+        for plataforma in plataformas:
+            if self.rect.colliderect(plataforma.rect):
+                # Ver si viene cayendo
+                if self.vel_y > 0 and self.rect.bottom > plataforma.rect.top:
+                    self.rect.bottom = plataforma.rect.top
+                    self.vel_y = 0
+                    self.en_suelo = True
+
+        # Limitar bordes
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > ANCHO:
+            self.rect.right = ANCHO
+
+class Plataforma(pygame.sprite.Sprite):
+    def __init__(self, x, y, ancho, alto):
+        super().__init__()
+        self.image = pygame.Surface((ancho, alto))
+        self.image.fill(VERDE_PLATAFORMA)
+        self.rect = self.image.get_rect(topleft=(x, y))
+
+class Moneda(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("sprites-coins/sprite1-1.jpg").convert()
+        self.image.set_colorkey((255, 255, 255))
+        self.image = pygame.transform.scale(self.image, (30, 30))
+        self.rect = self.image.get_rect(center=(x, y))
+
+# _____________________________
+# CONFIGURACIÓN DEL MUNDO
+# _____________________________
+
+# Jugador
+jugador = Jugador(100, 450)
+grupo_jugador = pygame.sprite.GroupSingle(jugador)
+
+# Plataformas
+grupo_plataformas = pygame.sprite.Group()
+plataforma_suelo = Plataforma(0, 550, ANCHO, 50)
+grupo_plataformas.add(plataforma_suelo)
+
+# Plataformas adicionales
+grupo_plataformas.add(Plataforma(200, 450, 150, 20))
+grupo_plataformas.add(Plataforma(450, 350, 150, 20))
+grupo_plataformas.add(Plataforma(650, 250, 100, 20))
+
+# Monedas
+grupo_monedas = pygame.sprite.Group()
+for _ in range(5):
+    x = random.randint(100, 700)
+    y = random.choice([200, 300, 400])
+    grupo_monedas.add(Moneda(x, y))
+
+# _____________________________
+# BUCLE PRINCIPAL
+# _____________________________
+
+clock = pygame.time.Clock()
+corriendo = True
+
+while corriendo:
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
-            en_ejecucion = False
+            corriendo = False
 
-        # Manejo de eventos sólo cuando estamos jugando
-        elif estado_actual == ESTADO_JUGANDO:
-            # ¡YA NO HAY EVENTO DE GENERAR OBSTÁCULOS!
-            # Presionar tecla para saltar
-            if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_w or evento.key == pygame.K_SPACE:
-                    jugador.saltar()
+    teclas = pygame.key.get_pressed()
+    jugador.mover(teclas)
 
-    # ¡NUEVO! Manejo de teclas presionadas (fuera del bucle de eventos)
-    # Esto permite que el jugador se mueva si dejas la tecla presionada
-    if estado_actual == ESTADO_JUGANDO:
-        teclas = pygame.key.get_pressed()
-        if teclas[pygame.K_d]:
-            jugador.mover(1)  # Mover derecha
-        if teclas[pygame.K_a]:
-            jugador.mover(-1)  # Mover izquierda
+    # Actualizar jugador
+    jugador.update(grupo_plataformas)
 
-        # --- 6. Actualización de Lógica (ESTADO_JUGANDO) ---
-        # 1. Actualiza al jugador (gravedad)
-        jugador.update()
+    # Colisiones con monedas
+    colisiones = pygame.sprite.spritecollide(jugador, grupo_monedas, dokill=True)
+    if colisiones:
+        puntos += 10
 
-        # 2. El escenario revisa las colisiones
-        escenario.update_colisiones_jugador(jugador)
+    # Si se acaban las monedas, aparecen nuevas
+    if len(grupo_monedas) == 0:
+        for _ in range(5):
+            x = random.randint(100, 700)
+            y = random.choice([200, 300, 400])
+            grupo_monedas.add(Moneda(x, y))
 
-        # 3. ¡ACTUALIZAR LA CÁMARA!
-        # Hacemos que la cámara siga al jugador
-        # El '200' es un 'margen' para que el jugador no esté pegado al borde
-        camera_x = jugador.rect.x - 200
+    # _____________________________
+    # DIBUJAR
+    # _____________________________
+    pantalla.fill(AZUL_CIELO)
 
-        # Opcional: Evitar que la cámara se vaya "hacia atrás" al inicio
-        if camera_x < 0:
-            camera_x = 0
+    # Suelo
+    pygame.draw.rect(pantalla, MARRON_SUELO, (0, 550, ANCHO, 50))
 
-        # --- 7. Dibujar en Pantalla (ESTADO_JUGANDO) ---
-        # 1. Dibuja el escenario (pasándole la cámara)
-        escenario.dibujar(ventana, camera_x)
+    grupo_plataformas.draw(pantalla)
+    grupo_monedas.draw(pantalla)
+    grupo_jugador.draw(pantalla)
 
-        # 2. Dibuja al jugador (restando la cámara)
-        # El jugador ahora SÍ se mueve en X, así que debemos restarle
-        # la posición de la cámara para que se dibuje en el lugar correcto
-        # de la pantalla.
-        rect_jugador_en_pantalla = jugador.rect.copy()
-        rect_jugador_en_pantalla.x -= camera_x
-
-        # (Aquí dibujarías la IMAGEN del jugador)
-        pygame.draw.rect(ventana, jugador.color, rect_jugador_en_pantalla)
-
-    # Puedes agregar otros estados (MENÚ, PAUSADO, GAMEOVER) aquí con elif estado_actual == ...
+    # Texto de puntos
+    texto_puntos = fuente.render(f"Puntos: {puntos}", True, (0, 0, 0))
+    pantalla.blit(texto_puntos, (20, 20))
 
     pygame.display.flip()
-    reloj.tick(FPS)
+    clock.tick(60)
 
-# --- 8. Fin ---
 pygame.quit()
+sys.exit()
