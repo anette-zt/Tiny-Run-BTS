@@ -27,7 +27,7 @@ RUTA_PERSONAJES = "Personajes_img"
 # Configuración de niveles (ordenados)
 niveles = [
     {"nombre": "No more dream", "fondo": "No more dream.jpg", "musica": "No more dream.mp3", "personaje": "Jin.png"},
-    {"nombre": "Mic Drop", "fondo": "Mic Drop.jpg", "musica": "MIC Drop.mp3", "personaje": "Suga.png"},
+    {"nombre": "Mic Drop", "fondo": "Mic Drop.jpg", "musica": "Mic Drop.mp3", "personaje": "Suga.png"},
     {"nombre": "Fake Love", "fondo": "Fake Love.jpg", "musica": "Fake Love.mp3", "personaje": "J-hope.png"},
     {"nombre": "IDOL", "fondo": "IDOL.jpg", "musica": "IDOL.mp3", "personaje": "RM.png"},
     {"nombre": "Blood Sweet and Tears", "fondo": "Blood Sweet and Tears.jpg", "musica": "Blood Sweet and Tears.mp3", "personaje": "Jimin.png"},
@@ -105,7 +105,7 @@ class Plataforma(pygame.sprite.Sprite):
 class Moneda(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.image.load("sprites-coins/sprite1-1.jpg").convert()
+        self.image = pygame.image.load("LightStick BTS.png").convert()
         self.image.set_colorkey((255, 255, 255))
         self.image = pygame.transform.scale(self.image, (30, 30))
         self.rect = self.image.get_rect(center=(x, y))
