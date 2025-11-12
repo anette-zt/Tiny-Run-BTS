@@ -6,7 +6,7 @@ Cada ciertos niveles el fondo es inspirado en algun MV.
 
 1.- Lo que si debe tener:<br>
 -Movimiento de personaje: Caminar, saltar y esquivar con las flechas WASD o flechas. <br>
--Objetivo: Puede ser recolectar objetos, llegar a alguna meta y evitar obstaculos <br>
+-Objetivo: Puede ser recolectar objetos, llegar a alguna meta y evitar enemigos <br>
 -Sistema de puntos recolectados: Para que el jugador sepa que va por buen camino o va perdiendo <br>
 -Menu en pantalla: Para poner pausa, irse al menu principal, quitar o poner musica<br>
 -Musica: Canciones aleatorias de BTS <br>

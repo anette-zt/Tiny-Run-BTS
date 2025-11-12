@@ -1,210 +1,213 @@
 import pygame
 import sys
-import random
-import os
+# --- NUEVO ---
+# No lo usaremos por ahora, pero si quieres aleatoriedad real,
+# lo necesitaremos. Por ahora, una lista fija es mejor.
+# import random 
 
-# Inicializa Pygame
+# Inicialización
 pygame.init()
+pygame.mixer.init()
 
-# Configuración de ventana
-ANCHO, ALTO = 800, 600
+ANCHO, ALTO = 1200, 700 
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Tiny Run BTS")
-
-# Fuente
-fuente = pygame.font.Font(None, 36)
+pygame.display.set_caption("Neon Platformer")
 
 # Colores
-AZUL_CIELO = (135, 206, 235)
-MARRON_SUELO = (139, 69, 19)
-VERDE_PLATAFORMA = (0, 200, 0)
+NEON_RED = (255, 50, 50)
+NEON_BLUE = (50, 200, 255)
+NEON_GREEN = (0, 255, 128)
+NEON_PURPLE = (200, 0, 255)
+FONDO = (0, 0, 0)
 
-# Rutas base
-RUTA_ESCENARIOS = "escenarios"
-RUTA_MUSICA = "musica"
-RUTA_PERSONAJES = "Personajes_img"
+clock = pygame.time.Clock()
+fuente = pygame.font.SysFont("consolas", 22)
+fuente_titulo = pygame.font.SysFont("consolas", 40)
 
-# Configuración de niveles (ordenados)
-niveles = [
-    {"nombre": "No more dream", "fondo": "No more dream.jpg", "musica": "No more dream.mp3", "personaje": "Jin.png"},
-    {"nombre": "Mic Drop", "fondo": "Mic Drop.jpg", "musica": "Mic Drop.mp3", "personaje": "Suga.png"},
-    {"nombre": "Fake Love", "fondo": "Fake Love.jpg", "musica": "Fake Love.mp3", "personaje": "J-hope.png"},
-    {"nombre": "IDOL", "fondo": "IDOL.jpg", "musica": "IDOL.mp3", "personaje": "RM.png"},
-    {"nombre": "Blood Sweet and Tears", "fondo": "Blood Sweet and Tears.jpg", "musica": "Blood Sweet and Tears.mp3", "personaje": "Jimin.png"},
-    {"nombre": "DNA", "fondo": "DNA.jpg", "musica": "DNA.mp3", "personaje": "V.png"},
-    {"nombre": "ON", "fondo": "ON.jpg", "musica": "ON.mp3", "personaje": "Jungkook.png"},
-    {"nombre": "Black Swan", "fondo": "Black Swan.jpg", "musica": "Black Swan.mp3", "personaje": "V.png"},
+# --- CARGA DE ASSETS ---
+try:
+    # Cargar personajes
+    img_v_original = pygame.image.load("V.png").convert_alpha()
+    img_p_original = pygame.image.load("V.png").convert_alpha() # Asume V.png si falta la otra
 
+    # Escalar personajes
+    NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ = 60, 90
+    personaje_verde_img = pygame.transform.scale(img_v_original, (NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ))
+    personaje_purpura_img = pygame.transform.scale(img_p_original, (NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ))
+    
+    # --- NUEVO: Cargar imagen del lightstick ---
+    # Asumo que el archivo se llama 'lightstick.png' y lo escalo a 30x30
+    img_lightstick_original = pygame.image.load("LightStick BTS.png").convert_alpha()
+    lightstick_img = pygame.transform.scale(img_lightstick_original, (30, 30))
 
+    # Cargar fondo y música
+    fondo_juego_img = pygame.image.load("Black Swan.jpg").convert()
+    fondo_juego_img = pygame.transform.scale(fondo_juego_img, (ANCHO, ALTO))
+
+    pygame.mixer.music.load("Black Swan.ogg")
+    pygame.mixer.music.play(-1)
+
+except FileNotFoundError as e:
+    print(f"Error al cargar archivo: {e}")
+    pygame.time.wait(3000)
+    sys.exit()
+
+# Plataformas
+plataformas = [
+    pygame.Rect(0, ALTO - 40, ANCHO, 40),
+    pygame.Rect(200, ALTO - 120, 120, 10),
+    pygame.Rect(400, ALTO - 200, 120, 10),
+    pygame.Rect(650, ALTO - 160, 150, 10),
+    pygame.Rect(900, ALTO - 250, 150, 10),
+    pygame.Rect(-3, 10, 3, ALTO),
+    pygame.Rect(ANCHO, 10, 3, ALTO),
 ]
 
-# Variables globales
-puntos = 0
-nivel_actual = 0
-gravedad = 0.5
+def dibujar_neon(rect, color, ancho=2):
+    for i in range(5, 0, -1):
+        pygame.draw.rect(pantalla, color, rect.inflate(i, i), ancho)
 
-# _____________________________
-# CLASES
-# _____________________________
+# --- MENÚ ---
+def mostrar_menu():
+    opcion_verde_rect = personaje_verde_img.get_rect(center=(ANCHO // 2 - 100, ALTO // 2))
+    opcion_purpura_rect = personaje_purpura_img.get_rect(center=(ANCHO // 2 + 100, ALTO // 2))
 
-class Jugador(pygame.sprite.Sprite):
-    def __init__(self, personaje_img, x, y):
-        super().__init__()
-        self.image_derecha = pygame.image.load(os.path.join(RUTA_PERSONAJES, personaje_img)).convert_alpha()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if opcion_verde_rect.collidepoint(event.pos):
+                    return 'verde'
+                if opcion_purpura_rect.collidepoint(event.pos):
+                    return 'purpura'
 
-        # 🔹 Escalar la imagen del personaje
-        ancho_original, alto_original = self.image_derecha.get_size()
-        self.image_derecha = pygame.transform.scale(
-            self.image_derecha,
-            (int(ancho_original * 0.6), int(alto_original * 0.6))  # 0.6 = 60% del tamaño original
-        )
+        pantalla.fill(FONDO)
+        texto_titulo = fuente_titulo.render("Elige tu Personaje (Clic para jugar)", True, NEON_BLUE)
+        pantalla.blit(texto_titulo, (ANCHO // 2 - texto_titulo.get_width() // 2, 150))
 
-        self.image_izquierda = pygame.transform.flip(self.image_derecha, True, False)
-        self.image = self.image_derecha
-        self.rect = self.image.get_rect(center=(x, y))
+        pantalla.blit(personaje_verde_img, opcion_verde_rect)
+        pantalla.blit(personaje_purpura_img, opcion_purpura_rect)
+        
+        dibujar_neon(opcion_verde_rect, NEON_GREEN)
+        dibujar_neon(opcion_purpura_rect, NEON_PURPLE)
 
-    def mover(self, teclas):
-        self.vel_x = 0
-        if teclas[pygame.K_LEFT]:
-            self.vel_x = -5
-            self.image = self.image_izquierda
-        if teclas[pygame.K_RIGHT]:
-            self.vel_x = 5
-            self.image = self.image_derecha
-        if teclas[pygame.K_SPACE] and self.en_suelo:
-            self.vel_y = -10
-            self.en_suelo = False
+        pygame.display.flip()
+        clock.tick(30)
 
-    def aplicar_gravedad(self):
-        self.vel_y += gravedad
-        if self.vel_y > 10:
-            self.vel_y = 10
+# --- JUEGO ---
+def juego_principal(personaje_elegido_id):
+    if personaje_elegido_id == 'verde':
+        imagen_actual = personaje_verde_img
+    else:
+        imagen_actual = personaje_purpura_img
 
-    def update(self, plataformas):
-        self.rect.x += self.vel_x
-        self.aplicar_gravedad()
-        self.rect.y += self.vel_y
+    jugador_rect = imagen_actual.get_rect(topleft=(100, ALTO - 150))
+    vel_y = 0
+    en_suelo = False
+    vel_x = 0
 
-        # Colisiones con plataformas
-        self.en_suelo = False
-        for plataforma in plataformas:
-            if self.rect.colliderect(plataforma.rect):
-                if self.vel_y > 0 and self.rect.bottom > plataforma.rect.top:
-                    self.rect.bottom = plataforma.rect.top
-                    self.vel_y = 0
-                    self.en_suelo = True
+    enemigos = [
+        pygame.Rect(500, ALTO - 70, 30, 30),
+        pygame.Rect(700, ALTO - 190, 30, 30)
+    ]
+    dir_enemigo = [1, -1]
+    puntos = 0
 
-        # Limites pantalla
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > ANCHO:
-            self.rect.right = ANCHO
+    # --- NUEVO: Lista de lightsticks ---
+    # Cada lightstick es un Rect. Modifica estas coordenadas como quieras.
+    # Las defino aquí para que se reinicien cada vez que mueres.
+    lightsticks = [
+        pygame.Rect(250, ALTO - 150, 30, 30), # Sobre la plataforma 1
+        pygame.Rect(450, ALTO - 230, 30, 30), # Sobre la plataforma 2
+        pygame.Rect(700, ALTO - 190, 30, 30), # Sobre la plataforma 3
+        pygame.Rect(950, ALTO - 280, 30, 30), # Sobre la plataforma 4
+        pygame.Rect(100, ALTO - 70, 30, 30),  # En el suelo
+        pygame.Rect(1200, ALTO - 70, 30, 30)  # En el suelo
+    ]
 
-class Plataforma(pygame.sprite.Sprite):
-    def __init__(self, x, y, ancho, alto):
-        super().__init__()
-        self.image = pygame.Surface((ancho, alto))
-        self.image.fill(VERDE_PLATAFORMA)
-        self.rect = self.image.get_rect(topleft=(x, y))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-class Moneda(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.image.load("LightStick BTS.png").convert()
-        self.image.set_colorkey((255, 255, 255))
-        self.image = pygame.transform.scale(self.image, (30, 30))
-        self.rect = self.image.get_rect(center=(x, y))
+        teclas = pygame.key.get_pressed()
+        vel_x = 0
+        if teclas[pygame.K_LEFT]: vel_x = -5
+        if teclas[pygame.K_RIGHT]: vel_x = 5
+        if teclas[pygame.K_SPACE] and en_suelo:
+            vel_y = -15
+            en_suelo = False
 
-# _____________________________
-# FUNCIONES
-# _____________________________
+        vel_y += 1
+        if vel_y > 10: vel_y = 10
 
-def cargar_fondo(nombre_archivo):
-    ruta = os.path.join(RUTA_ESCENARIOS, nombre_archivo)
-    fondo = pygame.image.load(ruta).convert()
-    return pygame.transform.scale(fondo, (ANCHO, ALTO))
+        # Lógica de movimiento y colisión
+        jugador_rect.x += vel_x
+        for p in plataformas:
+            if jugador_rect.colliderect(p):
+                if vel_x > 0: jugador_rect.right = p.left
+                if vel_x < 0: jugador_rect.left = p.right
 
-def reproducir_musica(nombre_archivo):
-    ruta = os.path.join(RUTA_MUSICA, nombre_archivo)
-    pygame.mixer.music.load(ruta)
-    pygame.mixer.music.play(-1)  # bucle infinito
-    pygame.mixer.music.set_volume(0.3)
+        jugador_rect.y += vel_y
+        en_suelo = False
+        for p in plataformas:
+            if jugador_rect.colliderect(p):
+                if vel_y > 0:
+                    jugador_rect.bottom = p.top
+                    en_suelo = True
+                    vel_y = 0
+                elif vel_y < 0:
+                    jugador_rect.top = p.bottom
+                    vel_y = 0
+        
+        # Colisión con enemigos
+        for i, e in enumerate(enemigos):
+            e.x += dir_enemigo[i] * 3
+            if e.left < 0 or e.right > ANCHO: dir_enemigo[i] *= -1
+            if jugador_rect.colliderect(e):
+                print(f"Game Over! Puntos: {puntos // 10}")
+                return
 
-def crear_nivel(nivel_info):
-    global jugador, grupo_jugador, grupo_plataformas, grupo_monedas, fondo
+        # --- NUEVO: Colisión con lightsticks ---
+        # Creamos una lista temporal para guardar los que se recolectan
+        recolectados = []
+        for ls_rect in lightsticks:
+            if jugador_rect.colliderect(ls_rect):
+                # Vale 10 puntos de display (100 puntos internos)
+                puntos += 100 
+                recolectados.append(ls_rect)
 
-    # Fondo
-    fondo = cargar_fondo(nivel_info["fondo"])
-    reproducir_musica(nivel_info["musica"])
+        # Eliminamos los recolectados de la lista principal
+        # (Esta es la forma segura de eliminar de una lista mientras se itera)
+        lightsticks = [ls for ls in lightsticks if ls not in recolectados]
 
-    # Jugador
-    jugador = Jugador(nivel_info["personaje"], 100, 450)
-    grupo_jugador = pygame.sprite.GroupSingle(jugador)
 
-    # Plataformas
-    grupo_plataformas = pygame.sprite.Group()
-    grupo_plataformas.add(Plataforma(0, 550, ANCHO, 50))
-    grupo_plataformas.add(Plataforma(200, 450, 150, 20))
-    grupo_plataformas.add(Plataforma(450, 350, 150, 20))
-    grupo_plataformas.add(Plataforma(650, 250, 100, 20))
+        # --- Dibujado ---
+        pantalla.blit(fondo_juego_img, (0, 0))
+        for p in plataformas: dibujar_neon(p, NEON_BLUE)
 
-    # Monedas
-    grupo_monedas = pygame.sprite.Group()
-    for _ in range(5):
-        x = random.randint(100, 700)
-        y = random.choice([200, 300, 400])
-        grupo_monedas.add(Moneda(x, y))
+        # --- NUEVO: Dibujar los lightsticks ---
+        for ls_rect in lightsticks:
+            pantalla.blit(lightstick_img, ls_rect)
 
-    return grupo_jugador, grupo_plataformas, grupo_monedas, fondo
+        # Dibujar jugador
+        pantalla.blit(imagen_actual, jugador_rect) 
+        
+        # Dibujar enemigos
+        for e in enemigos: dibujar_neon(e, NEON_RED)
 
-# _____________________________
-# INICIO DEL JUEGO
-# _____________________________
+        # Puntos (--- MODIFICADO ---)
+        puntos += 1 # Puntos por tiempo
+        texto = fuente.render(f"Puntos: {puntos // 10}", True, NEON_PURPLE)
+        pantalla.blit(texto, (10, 10))
 
-grupo_jugador, grupo_plataformas, grupo_monedas, fondo = crear_nivel(niveles[nivel_actual])
-clock = pygame.time.Clock()
-corriendo = True
-puntos = 0
+        pygame.display.flip()
+        clock.tick(60)
 
-# _____________________________
-# BUCLE PRINCIPAL
-# _____________________________
-
-while corriendo:
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            corriendo = False
-
-    teclas = pygame.key.get_pressed()
-    jugador.mover(teclas)
-    jugador.update(grupo_plataformas)
-
-    # Colisiones con monedas
-    colisiones = pygame.sprite.spritecollide(jugador, grupo_monedas, dokill=True)
-    if colisiones:
-        puntos += 10
-
-    # Cambiar de nivel cada 50 puntos
-    if puntos >= 50 * (nivel_actual + 1) and nivel_actual < len(niveles) - 1:
-        nivel_actual += 1
-        grupo_jugador, grupo_plataformas, grupo_monedas, fondo = crear_nivel(niveles[nivel_actual])
-
-    # _____________________________
-    # DIBUJAR
-    # _____________________________
-    pantalla.blit(fondo, (0, 0))
-    grupo_plataformas.draw(pantalla)
-    grupo_monedas.draw(pantalla)
-    grupo_jugador.draw(pantalla)
-
-    # Texto
-    texto_puntos = fuente.render(f"Puntos: {puntos}", True, (255, 255, 255))
-    texto_nivel = fuente.render(f"Nivel: {niveles[nivel_actual]['nombre']}", True, (255, 255, 255))
-    pantalla.blit(texto_puntos, (20, 20))
-    pantalla.blit(texto_nivel, (20, 60))
-
-    pygame.display.flip()
-    clock.tick(60)
-
-pygame.quit()
-sys.exit()
+# --- BUCLE PRINCIPAL ---
+while True:
+    personaje = mostrar_menu()
+    juego_principal(personaje)
