@@ -1,5 +1,6 @@
 import pygame
 import sys
+import sqlite3 # Importamos la libreria de base de datos  
 
 # Inicializacion
 pygame.init()
@@ -7,19 +8,66 @@ pygame.mixer.init()
 
 ANCHO, ALTO = 1200, 700 
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("ºTiny Run BTS")
+pygame.display.set_caption("Tiny Run BTS ")
 
 # Colores
 FONDO = (0, 0, 0)
-VERDE_NORMAL = (0, 200, 0) # Verde para plataformas
-ROJO_NORMAL = (255, 0, 0) # Rojo para enemigos
-BLANCO = (255, 255, 255) # Para el texto
+VERDE_NORMAL = (0, 200, 0)
+ROJO_NORMAL = (255, 0, 0)
+BLANCO = (255, 255, 255)
+AMARILLO = (255, 255, 0) # color para el record
 
 clock = pygame.time.Clock()
 fuente = pygame.font.SysFont("consolas", 22)
 fuente_titulo = pygame.font.SysFont("consolas", 40)
 
-# --- CARGA DE ASSETS ---
+# Base de datos 
+def inicializar_db():
+    try:
+        conexion = sqlite3.connect("tiny_run.db")
+        cursor = conexion.cursor()
+        # Crea la tabla si no existe
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS puntuaciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                puntos INTEGER
+            )
+        ''')
+        conexion.commit()
+        conexion.close()
+        print("Base de datos cargada correctamente.")
+    except Exception as e:
+        print(f"Error en base de datos: {e}")
+
+def guardar_puntaje(puntos):
+    try:
+        conexion = sqlite3.connect("tiny_run.db")
+        cursor = conexion.cursor()
+        cursor.execute("INSERT INTO puntuaciones (puntos) VALUES (?)", (puntos,))
+        conexion.commit()
+        conexion.close()
+        print(f"Puntaje guardado: {puntos}")
+    except Exception as e:
+        print(f"Error al guardar puntaje: {e}")
+
+def obtener_record():
+    try:
+        conexion = sqlite3.connect("tiny_run.db")
+        cursor = conexion.cursor()
+        # Selecciona el puntaje más alto
+        cursor.execute("SELECT MAX(puntos) FROM puntuaciones")
+        record = cursor.fetchone()[0]
+        conexion.close()
+        # Si no hay record (es la primera vez), devuelve 0
+        return record if record is not None else 0
+    except Exception as e:
+        return 0
+
+# Inicializamos la DB al arrancar el juego
+inicializar_db()
+
+# Cargar recursos 
 try:
     # Cargar personaje
     img_v_original = pygame.image.load("V.png").convert_alpha()
@@ -33,10 +81,10 @@ try:
     lightstick_img = pygame.transform.scale(img_lightstick_original, (30, 30))
 
     # Cargar fondo y música
-    fondo_juego_img = pygame.image.load("IDOL.jpg").convert()
+    fondo_juego_img = pygame.image.load(" DNA.png").convert()
     fondo_juego_img = pygame.transform.scale(fondo_juego_img, (ANCHO, ALTO))
 
-    pygame.mixer.music.load("IDOL.ogg")
+    pygame.mixer.music.load(" DNA.ogg")
     pygame.mixer.music.play(-1)
 
 except FileNotFoundError as e:
@@ -46,12 +94,9 @@ except FileNotFoundError as e:
 
 # Plataformas
 plataformas = [
-    # Suelo y paredes
     pygame.Rect(0, ALTO - 40, ANCHO, 40),
     pygame.Rect(-3, 10, 3, ALTO),
     pygame.Rect(ANCHO, 10, 3, ALTO),
-    
-    # Plataformas originales
     pygame.Rect(200, ALTO - 120, 120, 10),
     pygame.Rect(400, ALTO - 200, 120, 10),
     pygame.Rect(650, ALTO - 160, 150, 10),
@@ -62,7 +107,7 @@ plataformas = [
     pygame.Rect(600, ALTO - 450, 100, 10),
 ]
 
-# --- JUEGO ---
+#   JUEGO  
 def juego_principal():
     
     imagen_actual = personaje_verde_img
@@ -71,29 +116,29 @@ def juego_principal():
     en_suelo = False
     vel_x = 0
 
-    # --- MODIFICADO: Añadidos dos enemigos ---
     enemigos = [
-        pygame.Rect(500, ALTO - 70, 30, 30),  # Enemigo 1 (suelo)
-        pygame.Rect(700, ALTO - 190, 30, 30), # Enemigo 2 (plataforma)
-        # --- NUEVOS ENEMIGOS ---
-        pygame.Rect(420, ALTO - 230, 30, 30), # Enemigo 3 (plataforma)
-        pygame.Rect(320, ALTO - 430, 30, 30)  # Enemigo 4 (plataforma alta)
+        pygame.Rect(500, ALTO - 70, 30, 30),
+        pygame.Rect(700, ALTO - 190, 30, 30),
+        pygame.Rect(420, ALTO - 230, 30, 30),
+        pygame.Rect(320, ALTO - 430, 30, 30)
     ]
     
-    # --- MODIFICADO: Añadidas direcciones para los nuevos enemigos ---
-    dir_enemigo = [1, -1, 1, -1] # Debe tener 4 elementos, uno por enemigo
+    dir_enemigo = [1, -1, 1, -1] 
     
     puntos = 0 
+    
+    # Obtener el record actual de la base de datos  
+    record_actual = obtener_record()
 
     lightsticks = [
         pygame.Rect(250, ALTO - 150, 30, 30),
-        pygame.Rect(450, ALTO - 230, 30, 30), # Ojo: ahora comparte plataforma con enemigo 3
+        pygame.Rect(450, ALTO - 230, 30, 30),
         pygame.Rect(700, ALTO - 190, 30, 30),
         pygame.Rect(950, ALTO - 280, 30, 30),
         pygame.Rect(100, ALTO - 70, 30, 30),
         pygame.Rect(1100, ALTO - 70, 30, 30), 
         pygame.Rect(130, ALTO - 350, 30, 30),
-        pygame.Rect(350, ALTO - 430, 30, 30), # Ojo: ahora comparte plataforma con enemigo 4
+        pygame.Rect(350, ALTO - 430, 30, 30),
         pygame.Rect(580, ALTO - 330, 30, 30),
         pygame.Rect(830, ALTO - 480, 30, 30),
     ]
@@ -115,14 +160,14 @@ def juego_principal():
         vel_y += 1
         if vel_y > 10: vel_y = 10
 
-        # Lógica de movimiento y colisión X
+        # Logica de movimiento y colision X
         jugador_rect.x += vel_x
         for p in plataformas:
             if jugador_rect.colliderect(p):
                 if vel_x > 0: jugador_rect.right = p.left
                 if vel_x < 0: jugador_rect.left = p.right
 
-        # Lógica de movimiento y colisión Y
+        # Logica de movimiento y colision Y
         jugador_rect.y += vel_y
         en_suelo = False
         for p in plataformas:
@@ -135,16 +180,24 @@ def juego_principal():
                     jugador_rect.top = p.bottom
                     vel_y = 0
         
-        # Colisión con enemigos
-        # (Esta lógica funciona para 2 o 4 enemigos sin cambio)
+        # Colision con enemigos
         for i, e in enumerate(enemigos):
             e.x += dir_enemigo[i] * 3
             if e.left < 0 or e.right > ANCHO: dir_enemigo[i] *= -1
             if jugador_rect.colliderect(e):
                 print(f"Game Over! Puntos: {puntos}")
+                
+                # Guardarpuntaje al morir  
+                guardar_puntaje(puntos)
+                
+                # Pequeña pausa antes de reiniciar
+                texto_go = fuente_titulo.render("GAME OVER", True, ROJO_NORMAL)
+                pantalla.blit(texto_go, (ANCHO//2 - 100, ALTO//2))
+                pygame.display.flip()
+                pygame.time.wait(2000)
                 return 
 
-        # Colisión con lightsticks
+        # Colision con lightsticks
         recolectados = []
         for ls_rect in lightsticks:
             if jugador_rect.colliderect(ls_rect):
@@ -153,32 +206,32 @@ def juego_principal():
 
         lightsticks = [ls for ls in lightsticks if ls not in recolectados]
 
-
-        # --- Dibujado ---
+        #   Dibujado 
         pantalla.blit(fondo_juego_img, (0, 0))
         
-        # Dibujar plataformas sólidas verdes
         for p in plataformas:
             pygame.draw.rect(pantalla, VERDE_NORMAL, p)
 
-        # Dibujar los lightsticks
         for ls_rect in lightsticks:
             pantalla.blit(lightstick_img, ls_rect)
 
-        # Dibujar jugador
         pantalla.blit(imagen_actual, jugador_rect) 
         
-        # Dibujar enemigos solidos rojos
         for e in enemigos:
             pygame.draw.rect(pantalla, ROJO_NORMAL, e)
 
-        # Mostrar puntos en color BLANCO
+        #   Puntos y record pasados  
         texto_puntos = fuente.render(f"Puntos: {puntos}", True, BLANCO)
         pantalla.blit(texto_puntos, (10, 10))
+        
+        # Si superamos el record en tiempo real, mostramos el puntaje actual como record
+        display_record = max(puntos, record_actual)
+        texto_record = fuente.render(f"Récord: {display_record}", True, AMARILLO)
+        pantalla.blit(texto_record, (10, 40)) 
 
         pygame.display.flip()
         clock.tick(60)
 
-#  BUCLE PRINCIPAL 
+# bucle principal 
 while True:
     juego_principal()
