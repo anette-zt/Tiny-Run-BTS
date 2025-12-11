@@ -14,7 +14,7 @@ pygame.mixer.init()
 
 ANCHO, ALTO = 1200, 700
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Tiny Run BTS - Ariam Anette Zurita Torres")
+pygame.display.set_caption("Tiny Run BTS ")
 
 # Colores
 FONDO = (0, 0, 0)
@@ -36,7 +36,7 @@ def inicializar_db():
         conexion = sqlite3.connect("tiny_run.db")
         cursor = conexion.cursor()
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS puntuaciones (
+            CREATE TABLE puntuaciones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 puntos INTEGER
@@ -361,7 +361,7 @@ def juego_principal():
         pygame.display.flip()
         clock.tick(60)
 
-# --- 6. BUCLE PRINCIPAL (EL CEREBRO) ---
+# --- 6. BUCLE PRINCIPAL ---
 # Este bucle controla que primero salga el menu, y luego el juego, infinitamente.
 while True:
     mostrar_menu()
