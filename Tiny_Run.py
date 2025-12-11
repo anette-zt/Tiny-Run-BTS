@@ -2,13 +2,13 @@
 # Asignatura: Graficacion
 # Estudiante: Ariam Anette Zurita Torres
 # Fecha: Noviembre - Diciembre 2025
-# Descripcion: Juego completo con Menú, Game Over y Pantalla de Victoria.
+# Descripcion: Juego completo con Menu, Game Over y Pantalla de Victoria.
 
 import pygame
 import sys
 import sqlite3
 
-# --- 1. INICIALIZACIÓN ---
+# --- 1. INICIALIZACION ---
 pygame.init()
 pygame.mixer.init()
 
@@ -73,7 +73,7 @@ def obtener_record():
 # Iniciamos la BD al arrancar
 inicializar_db()
 
-# --- 3. CARGA DE IMÁGENES Y SONIDO ---
+# --- 3. CARGA DE IMAGENES Y SONIDO ---
 # Variables globales para los assets
 img_v_original = None
 personaje_verde_img = None
@@ -81,7 +81,7 @@ fondo_juego_img = None
 lightstick_img = None
 
 try:
-    # Intenta cargar las imágenes reales
+    # Intenta cargar las imagenes reales
     img_v_original = pygame.image.load("V.png").convert_alpha()
     NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ = 60, 90
     personaje_verde_img = pygame.transform.scale(img_v_original, (NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ))
@@ -92,15 +92,15 @@ try:
     fondo_juego_img = pygame.image.load("Black Swan.jpg").convert()
     fondo_juego_img = pygame.transform.scale(fondo_juego_img, (ANCHO, ALTO))
 
-    # Música
+    # Musica
     pygame.mixer.music.load("Black Swan.ogg")
     pygame.mixer.music.play(-1) # Play infinito
 
 except Exception as e:
-    print(f"AVISO: No se encontraron algunas imágenes o música ({e}).")
+    print(f"AVISO: No se encontraron algunas imagenes o musica ({e}).")
     print("Usando modo de respaldo con cuadrados de colores.")
     
-    # Si fallan las imágenes, creamos cuadrados de colores para que el juego no falle
+    # Si fallan las imagenes, creamos cuadrados de colores para que el juego no falle
     personaje_verde_img = pygame.Surface((60, 90))
     personaje_verde_img.fill((0, 255, 0)) # Verde brillante
     
@@ -110,12 +110,12 @@ except Exception as e:
     lightstick_img = pygame.Surface((30, 30))
     lightstick_img.fill((255, 255, 0)) # Amarillo
 
-# --- 4. FUNCIÓN DEL MENÚ ---
+# --- 4. FUNCION DEL MENU ---
 def mostrar_menu():
     """Muestra la pantalla de bienvenida"""
     ejecutando_menu = True
     
-    # Botón JUGAR
+    # Boton JUGAR
     boton_rect = pygame.Rect(ANCHO//2 - 100, ALTO - 150, 200, 60)
     
     while ejecutando_menu:
@@ -123,19 +123,19 @@ def mostrar_menu():
         pantalla.blit(fondo_juego_img, (0,0))
         overlay = pygame.Surface((ANCHO, ALTO))
         overlay.set_alpha(150) # Transparencia
-        overlay.fill(NEGRO)
+        overlay.fill(MORADO_BTS)
         pantalla.blit(overlay, (0,0))
 
-        # Eventos del menú
+        # Eventos del menu
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if boton_rect.collidepoint(event.pos):
-                    ejecutando_menu = False # Salir del menú -> Ir al juego
+                    ejecutando_menu = False # Salir del menu -> Ir al juego
 
-        # Textos del menú
+        # Textos del menu
         titulo = fuente_gigante.render("Tiny Run BTS", True, MORADO_BTS)
         autora = fuente_peque.render("Desarrollado por: Ariam Anette Zurita Torres", True, BLANCO)
         
@@ -144,11 +144,11 @@ def mostrar_menu():
 
         # Lista de instrucciones
         instrucciones = [
-            "--- CÓMO JUGAR ---",
+            "--- COMO JUGAR ---",
             "flecha IZQ / DER : Moverse",
             "ESPACIO : Saltar",
             "Recoge todos los Lightsticks para GANAR",
-            "¡Evita a los enemigos rojos!"
+            "Evita a los enemigos rojos"
         ]
         
         y_pos = 250
@@ -157,7 +157,7 @@ def mostrar_menu():
             pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, y_pos))
             y_pos += 40
 
-        # Dibujar el botón
+        # Dibujar el boton
         mouse_pos = pygame.mouse.get_pos()
         color_btn = VERDE_PLATAFORMA if boton_rect.collidepoint(mouse_pos) else (0, 100, 0)
         
@@ -170,11 +170,11 @@ def mostrar_menu():
         pygame.display.flip()
         clock.tick(60)
 
-# --- 5. FUNCIÓN DEL JUEGO PRINCIPAL ---
+# --- 5. FUNCION DEL JUEGO PRINCIPAL ---
 def juego_principal():
     
     # Reiniciar variables del jugador
-    jugador_rect = personaje_verde_img.get_rect(topleft=(100, ALTO - 150))
+    jugador_rect = personaje_verde_img.get_rect(topleft=(50, ALTO - 150))
     vel_y = 0
     en_suelo = False
     puntos = 0
@@ -185,7 +185,7 @@ def juego_principal():
         pygame.Rect(0, ALTO - 40, ANCHO, 40),
         pygame.Rect(-3, 10, 3, ALTO),
         pygame.Rect(ANCHO, 10, 3, ALTO),
-        pygame.Rect(200, ALTO - 120, 120, 10),
+        pygame.Rect(200, ALTO - 130, 120, 10),
         pygame.Rect(400, ALTO - 200, 120, 10),
         pygame.Rect(650, ALTO - 160, 150, 10),
         pygame.Rect(900, ALTO - 250, 150, 10),
@@ -193,6 +193,9 @@ def juego_principal():
         pygame.Rect(300, ALTO - 400, 150, 10),
         pygame.Rect(550, ALTO - 300, 120, 10),
         pygame.Rect(600, ALTO - 450, 100, 10),
+        pygame.Rect(920, ALTO - 560, 100, 10),
+        pygame.Rect(750, ALTO - 520, 100, 10),
+
     ]
 
     # Definir Enemigos
@@ -204,15 +207,10 @@ def juego_principal():
         pygame.Rect(850, ALTO - 280, 30, 30),
         pygame.Rect(1100, ALTO - 70, 30, 30),
     ]
-    dir_enemigo = [1, -1, 1, -1] # Dirección de cada enemigo
 
-    # Definir Objetos (Lightstick s)
+    # Definir Objetos (Lightsticks)
     lightsticks = [
-        pygame.Rect(250, ALTO - 150, 30, 30),
-        pygame.Rect(450, ALTO - 230, 30, 30),
-        pygame.Rect(700, ALTO - 190, 30, 30),
-        pygame.Rect(950, ALTO - 280, 30, 30),
-        pygame.Rect(100, ALTO - 70, 30, 30),
+        pygame.Rect(850, ALTO - 250, 30, 30),
         pygame.Rect(1100, ALTO - 70, 30, 30),
         pygame.Rect(130, ALTO - 350, 30, 30),
         pygame.Rect(350, ALTO - 430, 30, 30),
@@ -223,7 +221,21 @@ def juego_principal():
         pygame.Rect(1150, ALTO - 500, 30, 30),
         pygame.Rect(400, ALTO - 600, 30, 30),
         pygame.Rect(750, ALTO - 400, 30, 30),
+        pygame.Rect(250, ALTO - 150, 30, 30),
+        pygame.Rect(450, ALTO - 230, 30, 30),
+        pygame.Rect(700, ALTO - 190, 30, 30),
+        pygame.Rect(950, ALTO - 280, 30, 30),
     ]
+
+    # Configuracion inicial de direccion de enemigos
+    dir_enemigo = []
+    velocidad_enemigo = 3
+    # Llenamos la lista de direcciones para cada enemigo
+    for i in range(len(enemigos)):
+        if i % 2 == 0:
+            dir_enemigo.append(1)  # Derecha
+        else:
+            dir_enemigo.append(-1) # Izquierda
 
     jugando = True
     while jugando:
@@ -266,14 +278,16 @@ def juego_principal():
                     jugador_rect.top = p.bottom 
                     vel_y = 0 
         
-        # C. LÓGICA DE ENEMIGOS (GAME OVER)
+        # C. LOGICA DE ENEMIGOS (MOVIMIENTO Y GAME OVER)
         for i in range(len(enemigos)):
-            if i % 2 == 0:
-                dir_enemigo.append(1)  # Los pares van a la derecha
-        else:
-            dir_enemigo.append(-1)     # Los impares van a la izquierda
+            # 1. Mover al enemigo
+            enemigos[i].x += velocidad_enemigo * dir_enemigo[i]
+
+            # 2. Rebotar en los bordes de la pantalla
+            if enemigos[i].right >= ANCHO or enemigos[i].left <= 0:
+                dir_enemigo[i] *= -1 
             
-            # Colision Jugador con Enemigo
+            # 3. Colision Jugador con Enemigo
             if jugador_rect.colliderect(enemigos[i]):
                 print(f"Game Over. Puntos: {puntos}")
                 guardar_puntaje(puntos)
@@ -286,9 +300,9 @@ def juego_principal():
                 
                 pygame.display.flip()
                 pygame.time.wait(3000) # Esperar 3 seg
-                return # Volver al Menú
+                return # Volver al Menu
 
-        # D. RECOLECCIÓN (LIGHTSTICKS)
+        # D. RECOLECCION (LIGHTSTICKS)
         recolectados = []
         for ls_rect in lightsticks:
             if jugador_rect.colliderect(ls_rect): 
@@ -298,14 +312,14 @@ def juego_principal():
         # Actualizar lista eliminando los recolectados
         lightsticks = [ls for ls in lightsticks if ls not in recolectados]
 
-        # --- E. CONDICIÓN DE VICTORIA ---
+        # --- E. CONDICION DE VICTORIA ---
         if len(lightsticks) == 0:
-            # Si no quedan lightsticks, ¡GANASTE!
+            # Si no quedan lightsticks, GANASTE
             guardar_puntaje(puntos)
             
             pantalla.fill(MORADO_BTS) # Fondo morado
             
-            txt_ganaste = fuente_gigante.render("¡FELICIDADES ARMY!", True, BLANCO)
+            txt_ganaste = fuente_gigante.render("FELICIDADES ARMY", True, BLANCO)
             txt_sub = fuente_titulo.render("Nivel Completado", True, BLANCO)
             txt_puntos = fuente_peque.render(f"Puntaje Final: {puntos}", True, BLANCO)
             
@@ -315,7 +329,7 @@ def juego_principal():
             
             pygame.display.flip()
             pygame.time.wait(5000) # Celebrar por 5 segundos
-            return # Volver al Menú
+            return # Volver al Menu
 
         # F. DIBUJAR TODO
         pantalla.blit(fondo_juego_img, (0, 0)) # Fondo
@@ -337,10 +351,10 @@ def juego_principal():
         
         # Mostrar solo si hay record
         display_record = max(puntos, record_actual)
-        texto_record = fuente_peque.render(f"Récord: {display_record}", True, NEGRO)
+        texto_record = fuente_peque.render(f"Record: {display_record}", True, NEGRO)
         pantalla.blit(texto_record, (10, 40))
 
-        # Cuántos faltan
+        # Cuantos faltan
         texto_restantes = fuente_peque.render(f"Faltan: {len(lightsticks)}", True, NEGRO)
         pantalla.blit(texto_restantes, (ANCHO - 150, 10))
 
@@ -348,7 +362,7 @@ def juego_principal():
         clock.tick(60)
 
 # --- 6. BUCLE PRINCIPAL (EL CEREBRO) ---
-# Este bucle controla que primero salga el menú, y luego el juego, infinitamente.
+# Este bucle controla que primero salga el menu, y luego el juego, infinitamente.
 while True:
     mostrar_menu()
-    juego_principal()
+    juego_principal()   
