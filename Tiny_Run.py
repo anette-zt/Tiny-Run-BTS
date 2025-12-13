@@ -20,7 +20,6 @@ pygame.display.set_caption("Tiny Run BTS ")
 FONDO = (0, 0, 0)
 VERDE_PLATAFORMA = (0, 200, 0)
 ROJO_ENEMIGO = (255, 0, 0)
-NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
 MORADO_BTS = (150, 50, 200) # Color especial para la victoria
 
@@ -83,7 +82,7 @@ lightstick_img = None
 try:
     # Intenta cargar las imagenes reales
     img_v_original = pygame.image.load("V.png").convert_alpha()
-    NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ = 60, 90
+    NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ = 40, 70
     personaje_verde_img = pygame.transform.scale(img_v_original, (NUEVO_ANCHO_PJ, NUEVO_ALTO_PJ))
     
     img_lightstick_original = pygame.image.load("LightStick BTS.png").convert_alpha()
@@ -195,6 +194,7 @@ def juego_principal():
         pygame.Rect(600, ALTO - 450, 100, 10),
         pygame.Rect(920, ALTO - 560, 100, 10),
         pygame.Rect(750, ALTO - 520, 100, 10),
+        pygame.Rect(1150, ALTO - 100, 50, 10),
 
     ]
 
@@ -346,16 +346,16 @@ def juego_principal():
             pygame.draw.rect(pantalla, ROJO_ENEMIGO, e)
 
         # Interfaz (HUD)
-        texto_puntos = fuente_peque.render(f"Puntos: {puntos}", True, NEGRO)
+        texto_puntos = fuente_peque.render(f"Puntos: {puntos}", True, BLANCO)
         pantalla.blit(texto_puntos, (10, 10))
         
         # Mostrar solo si hay record
         display_record = max(puntos, record_actual)
-        texto_record = fuente_peque.render(f"Record: {display_record}", True, NEGRO)
+        texto_record = fuente_peque.render(f"Record: {display_record}", True, BLANCO)
         pantalla.blit(texto_record, (10, 40))
 
         # Cuantos faltan
-        texto_restantes = fuente_peque.render(f"Faltan: {len(lightsticks)}", True, NEGRO)
+        texto_restantes = fuente_peque.render(f"Faltan: {len(lightsticks)}", True, BLANCO)
         pantalla.blit(texto_restantes, (ANCHO - 150, 10))
 
         pygame.display.flip()
